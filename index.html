@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draft Order Magic — 5Forms-LLC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  color: #303030;
+  background: #f1f1f1;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: #005bd3; text-decoration: none; cursor: pointer; }
+a:hover { text-decoration: underline; }
+input, select, textarea, button { font-family: inherit; font-size: 13px; }
+button { cursor: pointer; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOP BAR — Context bar mode
+   ═══════════════════════════════════════════════════════════════ */
+.topbar-context {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 56px; background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px; padding: 0 16px;
+}
+.topbar-context-label {
+  display: flex; align-items: center; gap: 8px;
+  color: #b5b5b5; font-size: 13px;
+}
+.topbar-context-label svg { width: 18px; height: 18px; opacity: 0.6; }
+.topbar-context-actions { display: flex; gap: 8px; position: absolute; right: 16px; }
+.btn-topbar {
+  height: 32px; padding: 0 12px; border-radius: 6px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-topbar-discard {
+  background: transparent; border: 1px solid #505050; color: #e3e3e3;
+}
+.btn-topbar-discard:hover { background: #303030; }
+.btn-topbar-save {
+  background: #404040; border: none; color: #919191; cursor: not-allowed;
+}
+.btn-topbar-save.active { background: #36a569; color: #fff; cursor: pointer; }
+.btn-topbar-save.active:hover { background: #2d8f59; }
+
+/* Shopify logo left side */
+.topbar-left { position: absolute; left: 16px; display: flex; align-items: center; gap: 8px; }
+.topbar-left svg { width: 28px; height: 28px; }
+.topbar-store { display: flex; align-items: center; gap: 8px; position: absolute; right: 180px; }
+.topbar-store-btn {
+  height: 32px; border-radius: 6px; border: none;
+  background: #303030; color: #e3e3e3; padding: 0 10px;
+  display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;
+  cursor: pointer;
+}
+.topbar-store-btn:hover { background: #404040; }
+.store-avatar {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: #50B498; color: #fff; font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.topbar-icon-btn {
+  width: 32px; height: 32px; border-radius: 6px; border: none;
+  background: transparent; color: #b5b5b5; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.topbar-icon-btn:hover { background: #303030; }
+.topbar-icon-btn svg { width: 18px; height: 18px; }
+.notif-dot { position: relative; }
+.notif-dot::after {
+  content: '1'; position: absolute; top: 3px; right: 3px;
+  width: 14px; height: 14px; background: #36a569; border-radius: 50%;
+  font-size: 9px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════════════════════════════ */
+.admin-sidebar {
+  position: fixed; top: 56px; left: 0; bottom: 0; z-index: 90;
+  width: 240px; background: #f7f7f7; border-right: 1px solid #e3e3e3;
+  overflow-y: auto; padding: 12px 8px;
+  display: flex; flex-direction: column;
+}
+.sidebar-nav { list-style: none; }
+.sidebar-nav li { margin-bottom: 1px; }
+.sidebar-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: 8px; font-size: 13px;
+  color: #303030; font-weight: 500; cursor: pointer;
+  transition: background 0.12s; text-decoration: none;
+}
+.sidebar-nav-item:hover { background: #ebebeb; text-decoration: none; }
+.sidebar-nav-item.active { background: #e3e3e3; font-weight: 600; }
+.sidebar-nav-item.dimmed { color: #919191; font-weight: 400; }
+.sidebar-nav-item svg { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.75; }
+.sidebar-nav-item .nav-badge {
+  background: #e4edff; color: #1f5199; font-size: 11px; font-weight: 600;
+  padding: 1px 7px; border-radius: 10px; margin-left: auto;
+}
+.sidebar-section-label {
+  font-size: 11px; font-weight: 600; color: #919191;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 16px 10px 6px; margin-top: 4px;
+  display: flex; align-items: center; gap: 4px; cursor: pointer;
+}
+.sidebar-section-label svg { width: 12px; height: 12px; }
+.sidebar-sub-items { list-style: none; }
+.sidebar-sub-item {
+  display: block; padding: 6px 10px 6px 40px; border-radius: 8px;
+  font-size: 13px; color: #616161; cursor: pointer;
+  transition: background 0.12s; text-decoration: none;
+}
+.sidebar-sub-item:hover { background: #ebebeb; color: #303030; text-decoration: none; }
+.sidebar-sub-item.active { background: #e3e3e3; color: #303030; font-weight: 600; }
+.sidebar-settings { margin-top: auto; padding-top: 12px; border-top: 1px solid #e3e3e3; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN CONTENT AREA
+   ═══════════════════════════════════════════════════════════════ */
+.admin-main {
+  position: fixed; top: 56px; left: 240px; right: 0; bottom: 0;
+  background: #f1f1f1; overflow-y: auto;
+}
+.admin-content { max-width: 1100px; margin: 0 auto; padding: 0 32px 60px; }
+
+/* Page Header */
+.page-header {
+  display: flex; align-items: center; gap: 8px; padding: 20px 0 20px;
+}
+.page-header-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #616161; }
+.page-header-icon svg { width: 20px; height: 20px; }
+.page-breadcrumb { font-size: 13px; color: #616161; }
+.page-title { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+
+/* Layout */
+.two-col { display: flex; gap: 20px; align-items: flex-start; }
+.col-main { flex: 1; min-width: 0; }
+.col-sidebar { width: 320px; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   POLARIS CARDS
+   ═══════════════════════════════════════════════════════════════ */
+.p-card {
+  background: #fff; border: 1px solid #e3e3e3; border-radius: 12px;
+  margin-bottom: 16px; overflow: hidden;
+}
+.p-card.payment-card { overflow: visible; }
+.p-card-section { padding: 16px 20px; }
+.p-card-section + .p-card-section { border-top: 1px solid #f1f1f1; }
+.p-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 0;
+}
+.p-card-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.p-card-action-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: none;
+  background: transparent; color: #616161; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.12s;
+}
+.p-card-action-btn:hover { background: #f1f1f1; }
+.p-card-action-btn svg { width: 16px; height: 16px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════════════════════ */
+.btn-primary {
+  background: #303030; color: #fff; border: none; border-radius: 8px;
+  height: 36px; padding: 0 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: background 0.15s; white-space: nowrap;
+}
+.btn-primary:hover { background: #1a1a1a; }
+.btn-primary:disabled { background: #b5b5b5; cursor: not-allowed; }
+.btn-secondary {
+  background: #fff; color: #303030; border: 1px solid #c9cccf; border-radius: 8px;
+  height: 36px; padding: 0 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn-secondary:hover { background: #f7f7f7; }
+.btn-plain { background: none; border: none; color: #005bd3; font-size: 13px; cursor: pointer; padding: 0; font-weight: 500; }
+.btn-plain:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════
+   FORMS
+   ═══════════════════════════════════════════════════════════════ */
+.form-input, .form-select, .form-textarea {
+  border: 1px solid #d4d4d4; border-radius: 8px;
+  padding: 7px 10px; font-size: 13px; font-family: inherit;
+  width: 100%; transition: border-color 0.15s, box-shadow 0.15s;
+  background: #fff; color: #303030;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none; border-color: #005bd3; box-shadow: 0 0 0 2px rgba(0,91,211,0.15);
+}
+.form-textarea { resize: vertical; min-height: 60px; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 13px; font-weight: 600; color: #303030; margin-bottom: 4px; }
+.form-label .required { color: #d72c0d; }
+.form-hint { font-size: 12px; color: #616161; margin-top: 2px; }
+.form-row { display: flex; gap: 12px; }
+.form-row > .form-group { flex: 1; }
+.search-input-wrap { position: relative; display: flex; align-items: center; }
+.search-input-wrap svg {
+  position: absolute; left: 10px; width: 16px; height: 16px; color: #919191; pointer-events: none;
+}
+.search-input-wrap .form-input { padding-left: 34px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   BADGES
+   ═══════════════════════════════════════════════════════════════ */
+.badge {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-green { background: #e4f5e9; color: #1f7a3f; }
+.badge-yellow { background: #fff5e1; color: #9e6c00; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PRODUCT SEARCH & LINE ITEMS
+   ═══════════════════════════════════════════════════════════════ */
+.product-search-row { display: flex; gap: 8px; align-items: center; }
+.product-search-row .search-input-wrap { flex: 1; }
+
+.product-header-row {
+  display: flex; align-items: center; padding: 10px 0 8px;
+  font-size: 12px; font-weight: 600; color: #616161;
+  border-bottom: 1px solid #f1f1f1;
+}
+.ph-product { flex: 1; }
+.ph-quantity { width: 80px; text-align: center; }
+.ph-total { width: 80px; text-align: right; }
+.ph-actions { width: 32px; }
+
+.line-item { padding: 12px 0; border-bottom: 1px solid #f1f1f1; transition: opacity 0.2s; }
+.line-item:last-child { border-bottom: none; }
+.line-item-row { display: flex; align-items: center; gap: 12px; }
+.line-item-img {
+  width: 48px; height: 48px; border-radius: 8px; border: 1px solid #e3e3e3;
+  background: #f7f7f7; flex-shrink: 0; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.line-item-info { flex: 1; min-width: 0; }
+.line-item-title { font-size: 13px; font-weight: 600; color: #303030; }
+.line-item-variant {
+  display: inline-flex; align-items: center;
+  background: #f1f1f1; padding: 1px 8px; border-radius: 4px;
+  font-size: 11px; color: #616161; margin-top: 3px;
+}
+.line-item-sku { font-size: 12px; color: #919191; margin-top: 2px; }
+.line-item-unit-price { font-size: 12px; color: #005bd3; margin-top: 2px; cursor: pointer; }
+.line-item-qty { width: 72px; flex-shrink: 0; }
+.line-item-qty input {
+  width: 100%; height: 32px; border: 1px solid #d4d4d4; border-radius: 6px;
+  text-align: center; font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.line-item-qty input:focus { outline: none; border-color: #005bd3; box-shadow: 0 0 0 2px rgba(0,91,211,0.15); }
+.line-item-total {
+  width: 80px; text-align: right; font-size: 13px; font-weight: 600;
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.line-item-remove {
+  width: 28px; height: 28px; border-radius: 6px; border: none;
+  background: transparent; color: #919191; display: flex;
+  align-items: center; justify-content: center; cursor: pointer;
+  flex-shrink: 0; font-size: 16px; transition: all 0.12s;
+}
+.line-item-remove:hover { background: #fde8e8; color: #d72c0d; }
+
+/* Customization row */
+.line-item-customize { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-left: 60px; }
+.btn-customize {
+  background: #fff; color: #005bd3; border: 1px solid #005bd3; border-radius: 6px;
+  height: 28px; padding: 0 10px; font-size: 12px; font-weight: 500;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+  transition: all 0.15s;
+}
+.btn-customize:hover { background: #f0f6ff; }
+.btn-customize.customized { background: #e4f5e9; color: #1f7a3f; border-color: #a3d9b1; }
+.customize-warning {
+  font-size: 12px; color: #9e6c00; display: flex; align-items: center; gap: 4px;
+}
+.customize-warning svg { width: 14px; height: 14px; }
+.customization-summary {
+  margin-top: 8px; padding: 10px 12px; margin-left: 60px;
+  background: #f9fdfb; border: 1px solid #d4e8db; border-radius: 8px;
+  font-size: 12px; color: #616161; line-height: 1.5;
+}
+.customization-summary .cs-row { display: flex; gap: 6px; margin-bottom: 2px; }
+.customization-summary .cs-label { color: #919191; min-width: 110px; }
+.customization-summary .cs-value { color: #303030; }
+.cs-toggle { color: #005bd3; cursor: pointer; font-size: 11px; margin-top: 4px; display: inline-block; }
+.cs-toggle:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PAYMENT SUMMARY
+   ═══════════════════════════════════════════════════════════════ */
+.payment-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 6px 0; font-size: 13px;
+}
+.payment-row .pr-label { color: #303030; }
+.payment-row .pr-dash { color: #919191; margin: 0 8px; }
+.payment-row .pr-value { font-variant-numeric: tabular-nums; text-align: right; min-width: 70px; }
+.payment-row.total {
+  font-size: 14px; font-weight: 700; padding-top: 10px;
+  margin-top: 6px; border-top: 1px solid #e3e3e3;
+}
+.payment-row .pr-link { color: #005bd3; cursor: pointer; }
+.payment-row .pr-link:hover { text-decoration: underline; }
+.payment-row .pr-items { color: #616161; margin-left: 8px; }
+.payment-note { font-size: 13px; color: #616161; padding: 12px 0 0; }
+.payment-actions {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 8px; padding: 16px 0 4px;
+  border-top: 1px solid #f1f1f1; margin-top: 12px;
+}
+.payment-due-later {
+  display: flex; align-items: center; gap: 8px; padding: 12px 0; font-size: 13px; color: #303030;
+}
+.payment-due-later input[type="checkbox"] { width: 16px; height: 16px; accent-color: #005bd3; }
+
+/* Collect Payment Dropdown */
+.collect-payment-wrap { position: relative; display: inline-block; }
+.btn-collect-payment {
+  background: #303030; color: #fff; border: none; border-radius: 8px;
+  height: 36px; padding: 0 12px 0 16px; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: background 0.15s;
+}
+.btn-collect-payment:hover { background: #1a1a1a; }
+.btn-collect-payment svg { width: 14px; height: 14px; }
+.collect-dropdown {
+  position: absolute; right: 0; top: 40px; z-index: 30;
+  background: #fff; border: 1px solid #e3e3e3; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12); min-width: 200px;
+  overflow: hidden; animation: fadeDown 0.12s ease;
+}
+.collect-dropdown.upward { top: auto; bottom: 40px; animation: fadeUp 0.12s ease; }
+.collect-dropdown.hidden { display: none; }
+@keyframes fadeDown { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+.collect-dropdown-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; cursor: pointer; font-size: 13px; color: #303030;
+  transition: background 0.1s;
+}
+.collect-dropdown-item:hover { background: #f7f7f7; }
+.collect-dropdown-item:first-child { border-bottom: 1px solid #f1f1f1; }
+.collect-dropdown-item svg { width: 16px; height: 16px; color: #616161; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR CARDS
+   ═══════════════════════════════════════════════════════════════ */
+.sidebar-card-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.sidebar-card-text { font-size: 13px; color: #616161; padding: 8px 0 0; }
+.market-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #f1f1f1; padding: 4px 10px; border-radius: 16px;
+  font-size: 12px; font-weight: 500; color: #303030; margin-top: 8px;
+}
+.market-pill svg { width: 14px; height: 14px; }
+.currency-label { font-size: 13px; font-weight: 500; color: #303030; margin-top: 12px; margin-bottom: 4px; }
+.tags-input {
+  border: 1px solid #d4d4d4; border-radius: 8px;
+  padding: 7px 10px; font-size: 13px; width: 100%;
+  background: #fff; color: #303030; min-height: 36px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tags-input:focus { outline: none; border-color: #005bd3; box-shadow: 0 0 0 2px rgba(0,91,211,0.15); }
+
+/* Customer results */
+.customer-results { margin-top: 8px; }
+.customer-result-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.12s;
+}
+.customer-result-item:hover { background: #f7f7f7; }
+.customer-avatar-sm {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #e3e3e3; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: #616161; flex-shrink: 0;
+}
+.customer-result-name { font-size: 13px; font-weight: 500; color: #303030; }
+.customer-result-email { font-size: 12px; color: #616161; }
+.customer-create-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; margin-top: 6px; border-radius: 6px; cursor: pointer;
+  border: 1px solid #d4e1f6; background: #f0f6ff; transition: background 0.12s, border-color 0.12s;
+}
+.customer-create-item:hover { background: #e8f1ff; border-color: #b9cef3; }
+.customer-create-icon {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #005bd3; color: #fff; font-size: 14px; line-height: 1;
+}
+.customer-create-text { font-size: 13px; font-weight: 500; color: #005bd3; }
+.customer-selected-card { background: #f7f7f7; border-radius: 8px; padding: 12px; margin-top: 8px; }
+.customer-selected-card .cs-name { font-size: 13px; font-weight: 600; color: #303030; }
+.customer-selected-card .cs-detail { font-size: 12px; color: #616161; margin-top: 2px; }
+.customer-selected-card .cs-change { font-size: 12px; color: #005bd3; cursor: pointer; margin-top: 6px; display: inline-block; }
+.customer-selected-card .cs-change:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease;
+  overflow-y: auto; padding: 40px 20px;
+}
+.modal-backdrop.hidden { display: none; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: #fff; border-radius: 14px;
+  width: 100%; max-width: 680px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: slideUp 0.2s ease;
+  max-height: 90vh; display: flex; flex-direction: column; margin: auto;
+}
+.modal-lg { max-width: 780px; }
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid #e3e3e3; flex-shrink: 0;
+}
+.modal-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.modal-close {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: transparent; color: #616161; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; transition: background 0.12s;
+}
+.modal-close:hover { background: #f1f1f1; }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-top: 1px solid #e3e3e3; flex-shrink: 0;
+}
+.modal-footer-right { display: flex; gap: 8px; }
+
+/* Modal image picker */
+.image-picker { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.image-picker-item {
+  width: 80px; height: 80px; border-radius: 8px;
+  border: 2px solid #e3e3e3; overflow: hidden; cursor: pointer;
+  transition: all 0.15s; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #fff;
+}
+.image-picker-item:hover { border-color: #b5b5b5; }
+.image-picker-item.selected { border-color: #005bd3; box-shadow: 0 0 0 2px rgba(0,91,211,0.2); }
+.image-picker-item .ip-label {
+  font-size: 10px; color: #616161; text-align: center;
+  padding: 2px 4px; position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.9); line-height: 1.2;
+}
+.image-picker-item.ip-color-swatch { width: 64px; height: 64px; }
+.ip-color-inner { width: 44px; height: 44px; border-radius: 4px; }
+
+.modal-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f1f1; }
+.modal-section:last-child { border-bottom: none; margin-bottom: 0; }
+.modal-section-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+.modal-section-title .required { color: #d72c0d; }
+.modal-section-hint { font-size: 12px; color: #616161; margin-bottom: 8px; }
+
+.radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.radio-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  transition: background 0.12s; border: 1px solid transparent;
+}
+.radio-item:hover { background: #f7f7f7; }
+.radio-item.selected { background: #f0f6ff; border-color: #005bd3; }
+.radio-item input[type="radio"] { width: 16px; height: 16px; accent-color: #005bd3; margin-top: 1px; flex-shrink: 0; }
+.radio-item-label { font-size: 13px; color: #303030; }
+.radio-item-desc { font-size: 12px; color: #616161; margin-top: 1px; }
+
+/* Browse modal specifics */
+.browse-product-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid #f1f1f1;
+}
+.browse-product-row:last-child { border-bottom: none; }
+.browse-product-check input { width: 16px; height: 16px; accent-color: #005bd3; cursor: pointer; }
+.browse-product-img {
+  width: 40px; height: 40px; border-radius: 6px; border: 1px solid #e3e3e3;
+  overflow: hidden; flex-shrink: 0; background: #f7f7f7;
+}
+.browse-product-name { font-size: 13px; font-weight: 500; color: #303030; flex: 1; }
+.browse-variant-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0 8px 52px; border-bottom: 1px solid #f1f1f1;
+}
+.browse-variant-name { flex: 1; font-size: 13px; color: #616161; }
+.browse-variant-available { width: 80px; font-size: 13px; color: #616161; }
+.browse-variant-price { width: 100px; text-align: right; font-size: 13px; }
+.browse-header-row {
+  display: flex; align-items: center; padding: 8px 0;
+  font-size: 12px; font-weight: 600; color: #616161; border-bottom: 1px solid #e3e3e3;
+}
+.bh-product { flex: 1; }
+.bh-available { width: 80px; }
+.bh-price { width: 100px; text-align: right; }
+.variants-selected-count { font-size: 12px; color: #616161; }
+
+/* Checkbox accept row */
+.checkbox-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px;
+}
+.checkbox-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #005bd3; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════════ */
+.toast-container {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  pointer-events: none;
+}
+.toast {
+  padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  animation: toastUp 0.25s ease-out; pointer-events: auto;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15); white-space: nowrap;
+}
+.toast-success { background: #303030; color: #fff; }
+.toast-error { background: #d72c0d; color: #fff; }
+.toast-info { background: #1f5199; color: #fff; }
+@keyframes toastUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITY
+   ═══════════════════════════════════════════════════════════════ */
+.view-hidden { display: none !important; }
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mb-8 { margin-bottom: 8px; }
+
+/* Scrollbars */
+.admin-main::-webkit-scrollbar, .modal-body::-webkit-scrollbar, .admin-sidebar::-webkit-scrollbar { width: 6px; }
+.admin-main::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track, .admin-sidebar::-webkit-scrollbar-track { background: transparent; }
+.admin-main::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb, .admin-sidebar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+/* Click outside close helper */
+.click-catcher { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 29; }
+</style>
+</head>
+
+<body>
+
+<!-- ═══════ TOP BAR ═══════ -->
+<header class="topbar-context">
+  <div class="topbar-left">
+    <svg viewBox="0 0 118 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M27.7 10.5c-.2-1.3-1-2.4-2-3.1-1-.7-2.2-.9-3.4-.7l-.2.1c-1.1.3-2 .5-2.8.5-.9 0-1.5-.2-2.2-.9-.9-.9-2.1-1.4-3.4-1.4-2.6 0-4.8 2.1-4.8 4.8 0 .6.1 1.2.3 1.7l.1.2C6.7 11.2 4.4 11 3 12c-1.5 1-2.2 2.8-1.8 4.5.5 2 2.3 3.4 4.4 3.4h.4l-.1.3c-.2.8-.1 1.7.3 2.4.5.9 1.3 1.5 2.3 1.7.6.1 1.2.1 1.8-.1l.1.5c.4 1.6 1.8 2.7 3.4 2.7.3 0 .6 0 .9-.1 1.2-.3 2.1-1.1 2.6-2.1.3.2.7.3 1 .4 1.8.4 3.7-.8 4.1-2.6l.1-.2c1.5.1 2.9-.5 3.8-1.7.9-1.1 1.2-2.6.8-4-.3-1.2-1.1-2.1-2.2-2.7.7-.7 1.2-1.6 1.3-2.6l-.5-1.3z" fill="#95BF47"/>
+      <path d="M23 10.4l-.1-.3-.4-.1c-.1 0-2.1-.4-2.1-.4s-1.4-1.4-1.6-1.5c-.1-.1-.2-.2-.4-.2v21.4l8-2c0 0-3.3-22-3.3-22.2 0 0-.1.3-.1 5.3" fill="#5E8E3E"/>
+    </svg>
+  </div>
+  <div class="topbar-context-label">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>
+    <span>Unsaved draft order</span>
+  </div>
+  <div style="position:absolute;right:180px;display:flex;align-items:center;gap:6px">
+    <button class="topbar-icon-btn"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 4h2v2h-2V6zm0 4h2v4h-2v-4z"/></svg></button>
+    <button class="topbar-icon-btn notif-dot"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a6 6 0 016 6c0 2.5-1 4.5-2 6l1 4H5l1-4c-1-1.5-2-3.5-2-6a6 6 0 016-6z"/><path d="M8 18a2 2 0 004 0"/></svg></button>
+    <button class="topbar-store-btn"><div class="store-avatar">5FO</div><span>5Forms-LLC</span></button>
+  </div>
+  <div class="topbar-context-actions">
+    <button class="btn-topbar btn-topbar-discard" onclick="showToast('Draft discarded','info')">Discard</button>
+    <button class="btn-topbar btn-topbar-save" id="btn-save">Save</button>
+  </div>
+</header>
+
+<!-- ═══════ SIDEBAR ═══════ -->
+<aside class="admin-sidebar">
+  <ul class="sidebar-nav">
+    <li><a class="sidebar-nav-item" href="#"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2L2 8v10h6v-6h4v6h6V8L10 2z"/></svg>Home</a></li>
+    <li>
+      <a class="sidebar-nav-item" href="#"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h14a1 1 0 011 1v1H2V4a1 1 0 011-1zm-1 4h16v9a2 2 0 01-2 2H4a2 2 0 01-2-2V7zm4 2v2h2V9H6zm4 0v2h2V9h-2z"/></svg>Orders <span class="nav-badge">9,999+</span></a>
+      <ul class="sidebar-sub-items">
+        <li><a class="sidebar-sub-item active">Drafts</a></li>
+        <li><a class="sidebar-sub-item">Shipping labels</a></li>
+        <li><a class="sidebar-sub-item">Abandoned checkouts</a></li>
+      </ul>
+    </li>
+    <li><a class="sidebar-nav-item" href="#"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 00-1 1v1H3v12h14V5h-3V4a1 1 0 00-1-1H7zm0 2h6v1H7V5zM5 9h10v1H5V9zm0 3h7v1H5v-1z"/></svg>Products</a></li>
+    <li><a class="sidebar-nav-item" href="#"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0H3z"/></svg>Customers</a></li>
+    <li><a class="sidebar-nav-item dimmed" href="#"><svg viewBox="0 0 20 20" fill="currentColor" opacity=".5"><path d="M2 4h16v2H2V4zm0 5h10v2H2V9zm0 5h14v2H2v-2z"/></svg>Marketing</a></li>
+    <li><a class="sidebar-nav-item dimmed" href="#"><svg viewBox="0 0 20 20" fill="currentColor" opacity=".5"><path d="M4 4h12v2H4V4zm2 4h8v2H6V8zm1 4h6v2H7v-2z"/></svg>Discounts</a></li>
+    <li><a class="sidebar-nav-item dimmed" href="#"><svg viewBox="0 0 20 20" fill="currentColor" opacity=".5"><path d="M3 3h14v14H3V3zm2 2v10h10V5H5z"/></svg>Content</a></li>
+    <li><a class="sidebar-nav-item dimmed" href="#"><svg viewBox="0 0 20 20" fill="currentColor" opacity=".5"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 3h2v2h-2V5zm0 4h2v6h-2V9z"/></svg>Markets</a></li>
+    <li><a class="sidebar-nav-item dimmed" href="#"><svg viewBox="0 0 20 20" fill="currentColor" opacity=".5"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 4v4h3l-4 5V9H7l4-5v2z"/></svg>Finance</a></li>
+    <li><a class="sidebar-nav-item dimmed" href="#"><svg viewBox="0 0 20 20" fill="currentColor" opacity=".5"><path d="M2 4h16v2H2V4zm0 5h10v2H2V9zm0 5h14v2H2v-2z"/></svg>Analytics</a></li>
+  </ul>
+  <div class="sidebar-section-label">Sales channels <svg viewBox="0 0 12 12" fill="currentColor"><path d="M4 3l4 3-4 3V3z"/></svg></div>
+  <div class="sidebar-section-label">Apps <svg viewBox="0 0 12 12" fill="currentColor"><path d="M4 3l4 3-4 3V3z"/></svg></div>
+  <ul class="sidebar-nav">
+    <li><a class="sidebar-nav-item active" href="#" onclick="return false"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 3h2v2h-2V5zm0 4h2v6h-2V9z"/></svg>Draft Order Magic <span style="font-size:10px;color:#919191;margin-left:auto">•</span></a></li>
+  </ul>
+  <div class="sidebar-settings">
+    <ul class="sidebar-nav">
+      <li><a class="sidebar-nav-item dimmed" href="#"><svg viewBox="0 0 20 20" fill="currentColor" opacity=".5"><path d="M10 13a3 3 0 100-6 3 3 0 000 6zm7.3-2.1l-1.2-.7c.1-.4.1-.8 0-1.2l1.2-.7a.5.5 0 00.2-.6l-1-1.7a.5.5 0 00-.6-.2l-1.3.5a5.6 5.6 0 00-1-.6l-.2-1.4a.5.5 0 00-.5-.4h-2a.5.5 0 00-.5.4l-.2 1.4c-.4.1-.7.3-1 .6L7.9 6a.5.5 0 00-.6.2l-1 1.7a.5.5 0 00.2.6l1.2.7c-.1.4-.1.8 0 1.2l-1.2.7a.5.5 0 00-.2.6l1 1.7a.5.5 0 00.6.2l1.3-.5c.3.2.6.4 1 .6l.2 1.4a.5.5 0 00.5.4h2a.5.5 0 00.5-.4l.2-1.4c.4-.1.7-.3 1-.6l1.3.5a.5.5 0 00.6-.2l1-1.7a.5.5 0 00-.2-.6z"/></svg>Settings</a></li>
+    </ul>
+  </div>
+</aside>
+
+<!-- ═══════ MAIN ═══════ -->
+<main class="admin-main" id="admin-main">
+  <div class="toast-container" id="toast-container"></div>
+  <div class="admin-content">
+    <div class="page-header">
+      <div class="page-header-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7l-5-5H6zm0 2h4v4h4"/></svg></div>
+      <span class="page-breadcrumb">›</span>
+      <span class="page-title">Create order</span>
+    </div>
+    <div class="two-col">
+      <!-- LEFT COL -->
+      <div class="col-main">
+        <!-- Products Card -->
+        <div class="p-card">
+          <div class="p-card-header" id="products-header">
+            <div class="p-card-title">Products</div>
+            <div id="products-more-btn" class="view-hidden">
+              <button class="p-card-action-btn" title="More" onclick="showToast('More actions','info')"><svg viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="4" r="2"/><circle cx="10" cy="10" r="2"/><circle cx="10" cy="16" r="2"/></svg></button>
+            </div>
+          </div>
+          <div class="p-card-section">
+            <div class="product-search-row">
+              <div class="search-input-wrap" style="flex:1">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="18" y2="18"/></svg>
+                <input class="form-input" id="product-search" type="text" placeholder="Search products" oninput="onProductSearch(this.value)">
+              </div>
+              <button class="btn-secondary" onclick="openBrowseModal()">Browse</button>
+              <button class="btn-secondary" onclick="showToast('Custom item feature coming soon','info')">Add custom item</button>
+            </div>
+            <!-- Inline search results -->
+            <div id="inline-search-results" class="view-hidden" style="margin-top:8px;max-height:220px;overflow-y:auto;border:1px solid #e3e3e3;border-radius:8px"></div>
+          </div>
+          <!-- Line Items Area -->
+          <div id="line-items-area" class="view-hidden">
+            <div class="p-card-section" style="padding-top:0">
+              <div class="product-header-row">
+                <div class="ph-product">Product</div>
+                <div class="ph-quantity">Quantity</div>
+                <div class="ph-total">Total</div>
+                <div class="ph-actions"></div>
+              </div>
+              <div id="line-items-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Card -->
+        <div class="p-card payment-card">
+          <div class="p-card-section">
+            <div class="p-card-title mb-8" style="margin-bottom:8px">Payment</div>
+            <div class="payment-row">
+              <span class="pr-label">Subtotal</span>
+              <span class="pr-items" id="pay-item-count"></span>
+              <span style="flex:1"></span>
+              <span class="pr-value" id="pay-subtotal">$0.00</span>
+            </div>
+            <div class="payment-row">
+              <span class="pr-link" onclick="showToast('Discount modal coming soon','info')">Add discount</span>
+              <span class="pr-dash">—</span>
+              <span style="flex:1"></span>
+              <span class="pr-value">$0.00</span>
+            </div>
+            <div class="payment-row">
+              <span class="pr-link" onclick="showToast('Shipping modal coming soon','info')">Add shipping or delivery</span>
+              <span class="pr-dash">—</span>
+              <span style="flex:1"></span>
+              <span class="pr-value">$0.00</span>
+            </div>
+            <div class="payment-row">
+              <span class="pr-link" style="display:flex;align-items:center;gap:4px">Estimated tax
+                <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" style="color:#919191"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7.2 6.5h1.6V12H7.2V6.5zM8 4a.8.8 0 110 1.6A.8.8 0 018 4z"/></svg>
+              </span>
+              <span style="flex:1"></span>
+              <span class="pr-value" id="pay-tax" style="color:#616161">Not calculated</span>
+            </div>
+            <div class="payment-row total">
+              <span>Total</span>
+              <span style="flex:1"></span>
+              <span class="pr-value" id="pay-total">$0.00</span>
+            </div>
+          </div>
+          <!-- Empty state message -->
+          <div class="p-card-section" id="payment-empty-note">
+            <div class="payment-note" style="padding:0">Add a product to calculate total and view payment options</div>
+          </div>
+          <!-- Payment controls (hidden until products added) -->
+          <div id="payment-controls" class="view-hidden">
+            <div class="p-card-section">
+              <label class="payment-due-later"><input type="checkbox"> Payment due later</label>
+            </div>
+            <div class="p-card-section">
+              <div class="payment-actions">
+                <button class="btn-secondary" onclick="showToast('Invoice sent to customer')">Send invoice</button>
+                <div class="collect-payment-wrap">
+                  <button class="btn-collect-payment" onclick="toggleCollectDropdown()">
+                    Collect payment
+                    <svg viewBox="0 0 12 12" fill="currentColor"><path d="M3 5l3 3 3-3"/></svg>
+                  </button>
+                  <div class="collect-dropdown hidden" id="collect-dropdown">
+                    <div class="collect-dropdown-item" onclick="showToast('Credit card payment form opening...','info');closeCollectDropdown()">
+                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="16" height="12" rx="2"/><path d="M2 8h16"/></svg>
+                      Credit card
+                    </div>
+                    <div class="collect-dropdown-item" onclick="showToast('Order marked as paid');closeCollectDropdown()">
+                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M7 10l2 2 4-4"/></svg>
+                      Mark as paid
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COL -->
+      <div class="col-sidebar">
+        <div class="p-card">
+          <div class="p-card-header">
+            <span class="sidebar-card-title">Notes</span>
+            <button class="p-card-action-btn" onclick="document.getElementById('notes-area').classList.toggle('view-hidden')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.3 1.7a1.5 1.5 0 012.1 2.1L5 12.2 1.5 13l.8-3.5L11.3 1.7z"/></svg></button>
+          </div>
+          <div class="p-card-section">
+            <div class="sidebar-card-text" id="notes-display">No notes</div>
+            <textarea class="form-textarea view-hidden mt-8" id="notes-area" placeholder="Add a note..." rows="3" oninput="document.getElementById('notes-display').textContent=this.value||'No notes'"></textarea>
+          </div>
+        </div>
+        <div class="p-card">
+          <div class="p-card-header"><span class="sidebar-card-title">Customer</span></div>
+          <div class="p-card-section">
+            <div id="customer-search-area">
+              <div class="search-input-wrap">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="18" y2="18"/></svg>
+                <input class="form-input" id="customer-search" type="text" placeholder="Search or create a customer" oninput="onCustomerSearch(this.value)">
+              </div>
+              <div id="customer-results" class="customer-results"></div>
+            </div>
+            <div id="customer-selected" class="view-hidden"></div>
+          </div>
+        </div>
+        <div class="p-card">
+          <div class="p-card-header">
+            <span class="sidebar-card-title">Markets</span>
+            <button class="p-card-action-btn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 3h3v2h-3V3zM3 6.5h2v3H3v-3zm8 0h2v3h-2v-3zM6.5 11h3v2h-3v-2zM7.5 7.5h1v1h-1v-1z"/></svg></button>
+          </div>
+          <div class="p-card-section">
+            <div class="market-pill"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM6.5 3.2A5.5 5.5 0 002.5 8h2c.1-1.7.5-3.3 1-4.8zM8 2.5c-.7 1.5-1.1 3.2-1.2 5h2.4c-.1-1.8-.5-3.5-1.2-5zM8 13.5c.7-1.5 1.1-3.2 1.2-5H6.8c.1 1.8.5 3.5 1.2 5zm1.5-10.3c.5 1.5.9 3.1 1 4.8h2a5.5 5.5 0 00-3-4.8zm3 6.3h-2c-.1 1.7-.5 3.3-1 4.8a5.5 5.5 0 003-4.8zm-7 4.8c-.5-1.5-.9-3.1-1-4.8h-2a5.5 5.5 0 003 4.8z"/></svg>United States</div>
+            <div class="currency-label">Currency</div>
+            <select class="form-select" style="height:36px"><option>US Dollar (USD $)</option></select>
+          </div>
+        </div>
+        <div class="p-card">
+          <div class="p-card-header">
+            <span class="sidebar-card-title">Tags</span>
+            <button class="p-card-action-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11.3 1.7a1.5 1.5 0 012.1 2.1L5 12.2 1.5 13l.8-3.5L11.3 1.7z"/></svg></button>
+          </div>
+          <div class="p-card-section">
+            <input class="tags-input" placeholder="Add tags...">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════ BROWSE PRODUCTS MODAL ═══════ -->
+<div class="modal-backdrop hidden" id="browse-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">Select products</div>
+      <button class="modal-close" onclick="closeBrowseModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding-top:12px">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div class="search-input-wrap" style="flex:1">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6"/><line x1="14" y1="14" x2="18" y2="18"/></svg>
+          <input class="form-input" type="text" placeholder="Search products" id="browse-search" oninput="filterBrowseProducts(this.value)">
+        </div>
+        <select class="form-select" style="width:140px;height:36px"><option>Search by All</option></select>
+      </div>
+      <div style="font-size:12px;color:#005bd3;margin-bottom:8px;cursor:pointer">Add filter +</div>
+      <div class="browse-header-row">
+        <div class="bh-product">Product</div>
+        <div class="bh-available">Available</div>
+        <div class="bh-price">Price</div>
+      </div>
+      <div id="browse-products-list"></div>
+    </div>
+    <div class="modal-footer">
+      <div class="variants-selected-count" id="browse-selected-count">0/500 variants selected</div>
+      <div class="modal-footer-right">
+        <button class="btn-secondary" onclick="closeBrowseModal()">Cancel</button>
+        <button class="btn-primary" id="browse-add-btn" onclick="addSelectedProducts()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CUSTOMIZE MODAL 1 (53151N) ═══════ -->
+<div class="modal-backdrop hidden" id="customize-modal-1">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">Customize — 53151N 3 On A Page Intro Pack</div>
+      <button class="modal-close" onclick="closeCustomizeModal(1)">✕</button>
+    </div>
+    <div class="modal-body" id="customize-body-1"></div>
+    <div class="modal-footer"><div></div><div class="modal-footer-right">
+      <button class="btn-secondary" onclick="closeCustomizeModal(1)">Cancel</button>
+      <button class="btn-primary" onclick="saveCustomization(1)">Save Customization</button>
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══════ CUSTOMIZE MODAL 2 (GEN6582) ═══════ -->
+<div class="modal-backdrop hidden" id="customize-modal-2">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">Customize — GEN6582 Repair Order with Key Tag Carbonless</div>
+      <button class="modal-close" onclick="closeCustomizeModal(2)">✕</button>
+    </div>
+    <div class="modal-body" id="customize-body-2"></div>
+    <div class="modal-footer"><div></div><div class="modal-footer-right">
+      <button class="btn-secondary" onclick="closeCustomizeModal(2)">Cancel</button>
+      <button class="btn-primary" onclick="saveCustomization(2)">Save Customization</button>
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══════ DATA & LOGIC ═══════ -->
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const fmt=n=>'$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+/* ─── DATA ─── */
+const CUSTOMERS = [
+  { id:'c1', name:'PrintMasters Inc.', contact:'David Chen', email:'david@printmasters.com', phone:'(415) 555-0142', address:'2840 Pacific Ave, San Francisco, CA 94115' },
+  { id:'c2', name:'Midwest Auto Repair Group', contact:'Karen Andersen', email:'karen@midwestauto.com', phone:'(314) 555-0198', address:'880 Industrial Dr, St. Louis, MO 63101' },
+  { id:'c3', name:'Bayou Business Supplies', contact:'Marcus Landry', email:'marcus@bayoubus.com', phone:'(337) 555-0167', address:'1250 Commerce Blvd, Lafayette, LA 70508' },
+  { id:'c4', name:'Delta Financial Services', contact:'Robert Johnson', email:'rob@deltafinancial.com', phone:'(225) 555-0213', address:'700 River Rd, Gonzales, LA 70737' },
+  { id:'c5', name:'Magnolia Printing Co.', contact:'Patricia Wilson', email:'pat@magnoliaprint.com', phone:'(504) 555-0189', address:'320 Magazine St, New Orleans, LA 70130' },
+  { id:'c6', name:'Skyline Office Solutions', contact:'James Miller', email:'james@skylineoffice.com', phone:'(212) 555-0234', address:'450 Park Ave S, New York, NY 10016' },
+  { id:'c7', name:'Pacific Coast Forms', contact:'Lisa Nguyen', email:'lisa@pacificforms.com', phone:'(206) 555-0156', address:'1200 Western Ave, Seattle, WA 98101' },
+  { id:'c8', name:'Heritage Check Printing', contact:'Thomas Brown', email:'tom@heritagechecks.com', phone:'(713) 555-0178', address:'5500 San Felipe St, Houston, TX 77056' },
+];
+
+const PRODUCTS = [
+  { id:'p1', title:'53151N 3 On A Page Intro Pack', imgBg:'#1a1a1a', imgText:'CHECK', customizable:1,
+    variants:[ {id:'v1',name:'150 - 1 Part',price:98.44,sku:'53151N-1'}, {id:'v2',name:'150 - 2 Parts',price:118.13,sku:'53151N-2'}, {id:'v3',name:'150 - 1 Part With EZShield',price:103.13,sku:'53151N-1-4444'}, {id:'v4',name:'150 - 2 Parts With EZShield',price:122.81,sku:'53151N-2-4444'} ] },
+  { id:'p2', title:'GEN6582 Repair Order with Key Tag Carbonless 11 x 8 1/2"', imgBg:'#003da5', imgText:'REPAIR', customizable:2,
+    variants:[ {id:'v5',name:'150 - 1 Part',price:221.36,sku:'GEN6582'}, {id:'v6',name:'150 - 2 Parts',price:254.56,sku:'GEN6582-2'}, {id:'v7',name:'150 - 3 Parts',price:287.76,sku:'GEN6582-3'} ] },
+  { id:'p3', title:'$100.00 Business Forms Gift Certificate', imgBg:'#e3e3e3', imgText:'GIFT', customizable:0,
+    variants:[ {id:'v8',name:'Default',price:100.00,sku:'GC-100'} ] },
+  { id:'p4', title:'$20.00 Business Forms Gift Certificate', imgBg:'#e3e3e3', imgText:'GIFT', customizable:0,
+    variants:[ {id:'v9',name:'Default',price:20.00,sku:'GC-20'} ] },
+  { id:'p5', title:'$250.00 Business Forms Gift Certificate', imgBg:'#e3e3e3', imgText:'GIFT', customizable:0,
+    variants:[ {id:'v10',name:'Default',price:250.00,sku:'GC-250'} ] },
+];
+
+/* ─── STATE ─── */
+const state = { lineItems: [], browseChecked: new Set(), customizations: {1:{},2:{}} };
+
+/* ─── TOAST ─── */
+let tid=0;
+window.showToast=function(msg,type='success'){
+  const c=$('#toast-container'),id='t'+(++tid),d=document.createElement('div');
+  d.id=id; d.className='toast toast-'+type; d.textContent=msg; c.appendChild(d);
+  setTimeout(()=>{const e=document.getElementById(id);if(e){e.style.opacity='0';e.style.transition='opacity .3s';setTimeout(()=>e.remove(),300)}},3000);
+};
+
+/* ─── SAVE BUTTON STATE ─── */
+function updateSaveBtn(){
+  const b=$('#btn-save');
+  if(state.lineItems.length>0){b.classList.add('active');b.style.cursor='pointer';b.onclick=()=>showToast('Draft order saved');}
+  else{b.classList.remove('active');b.style.cursor='not-allowed';b.onclick=null;}
+}
+
+/* ─── UPDATE TOTALS ─── */
+function updateTotals(){
+  let sub=0,cnt=0;
+  state.lineItems.forEach(li=>{
+    const el=document.getElementById('li-'+li.variantId);
+    if(!el)return;
+    const qty=parseInt(el.querySelector('.li-qty-input').value)||1;
+    li.qty=qty;
+    const lt=li.price*qty;
+    el.querySelector('.li-total-val').textContent=fmt(lt);
+    sub+=lt; cnt+=qty;
+  });
+  $('#pay-subtotal').textContent=fmt(sub);
+  $('#pay-total').textContent=fmt(sub);
+  $('#pay-item-count').textContent=cnt>0?cnt+' item'+(cnt>1?'s':''):'';
+
+  const hasItems=state.lineItems.length>0;
+  $('#line-items-area').classList.toggle('view-hidden',!hasItems);
+  $('#products-more-btn').classList.toggle('view-hidden',!hasItems);
+  $('#payment-empty-note').classList.toggle('view-hidden',hasItems);
+  $('#payment-controls').classList.toggle('view-hidden',!hasItems);
+  updateSaveBtn();
+}
+
+/* ─── ADD LINE ITEM ─── */
+function addLineItem(product,variant){
+  if(state.lineItems.find(l=>l.variantId===variant.id)) return;
+  state.lineItems.push({productId:product.id,variantId:variant.id,title:product.title,variantName:variant.name,sku:variant.sku,price:variant.price,qty:1,imgBg:product.imgBg,imgText:product.imgText,customizable:product.customizable});
+  renderLineItems();
+  updateTotals();
+}
+
+/* ─── REMOVE LINE ITEM ─── */
+window.removeLineItem=function(variantId){
+  state.lineItems=state.lineItems.filter(l=>l.variantId!==variantId);
+  renderLineItems();
+  updateTotals();
+  showToast('Product removed','info');
+};
+
+/* ─── RENDER LINE ITEMS ─── */
+function renderLineItems(){
+  const list=$('#line-items-list');
+  const imgColor=li=>(li.imgBg==='#e3e3e3'?'#616161':'#fff');
+  let html='';
+  state.lineItems.forEach(li=>{
+    const cNum=li.customizable;
+    const cData=state.customizations[cNum];
+    const isCustomized=cData&&Object.keys(cData).length>0&&cData._saved;
+    html+=`<div class="line-item" id="li-${li.variantId}">
+      <div class="line-item-row">
+        <div class="line-item-img"><div style="width:100%;height:100%;background:${li.imgBg};display:flex;align-items:center;justify-content:center;font-size:8px;color:${imgColor(li)};font-weight:600;text-align:center">${li.imgText}</div></div>
+        <div class="line-item-info">
+          <div class="line-item-title">${li.title}</div>
+          <div class="line-item-variant">${li.variantName}</div>
+          <div class="line-item-sku">${li.sku}</div>
+          <div class="line-item-unit-price">${fmt(li.price)}</div>
+        </div>
+        <div class="line-item-qty"><input type="number" class="li-qty-input" value="${li.qty}" min="1" onchange="updateTotals()" oninput="updateTotals()"></div>
+        <div class="line-item-total"><span class="li-total-val">${fmt(li.price*li.qty)}</span></div>
+        <button class="line-item-remove" onclick="removeLineItem('${li.variantId}')" title="Remove">✕</button>
+      </div>`;
+    if(cNum>0){
+      html+=`<div class="line-item-customize">
+        <button class="btn-customize ${isCustomized?'customized':''}" id="btn-c-${li.variantId}" onclick="openCustomizeModal(${cNum})">
+          ${isCustomized?'<svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" style="color:#1f7a3f"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm3.5 5.3l-4 4a.7.7 0 01-1 0l-2-2a.7.7 0 011-1L7 8.8l3.5-3.5a.7.7 0 011 1z"/></svg> Edit Customization':'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M11.3 1.7a1.5 1.5 0 012.1 2.1L5 12.2 1.5 13l.8-3.5L11.3 1.7z"/></svg> Customize'}
+        </button>
+        ${!isCustomized?'<span class="customize-warning"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 011 1v3a1 1 0 01-2 0V5a1 1 0 011-1zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>Not customized</span>':''}
+      </div>`;
+      if(isCustomized){
+        html+=renderSummaryHTML(cNum);
+      }
+    }
+    html+=`</div>`;
+  });
+  list.innerHTML=html;
+}
+
+/* ─── CUSTOMIZATION SUMMARY HTML ─── */
+function renderSummaryHTML(num){
+  const c=state.customizations[num]; if(!c||!c._saved) return '';
+  let rows=[];
+  if(num===1){
+    if(c.checkStyle) rows.push(['Check Style',cap(c.checkStyle)]);
+    if(c.depositSlip) rows.push(['Deposit Slip',c.depositSlip==='none'?'None':c.depositSlip.toUpperCase()]);
+    if(c.stamp) rows.push(['Stamp',c.stamp==='none'?'None':cap(c.stamp)]);
+    if(c.startingNumber) rows.push(['Starting #',c.startingNumber]);
+    if(c.typeface) rows.push(['Typeface',cap(c.typeface)]);
+    if(c.logoOption) rows.push(['Logo',cap(c.logoOption)]);
+    if(c.imprintBusiness) rows.push(['Business',c.imprintBusiness]);
+    if(c.imprintCsz) rows.push(['City/St/Zip',c.imprintCsz]);
+    if(c.signatureLines) rows.push(['Sig Lines',c.signatureLines]);
+    if(c.proof) rows.push(['Proof',c.proof==='yes'?'Yes':'No']);
+  } else {
+    if(c.startingNumber) rows.push(['Starting #',c.startingNumber]);
+    if(c.typeface) rows.push(['Typeface',cap(c.typeface)]);
+    if(c.logoOption) rows.push(['Logo',cap(c.logoOption)]);
+    if(c.imprintBusiness) rows.push(['Business',c.imprintBusiness]);
+    if(c.imprintCsz) rows.push(['City/St/Zip',c.imprintCsz]);
+    if(c.proof) rows.push(['Proof',c.proof==='yes'?'Yes':'No']);
+    if(c.express&&c.express!=='none') rows.push(['Express',cap(c.express.replace(/-/g,' '))]);
+  }
+  if(rows.length===0) return '';
+  const vis=rows.slice(0,4), hid=rows.slice(4);
+  let h=`<div class="customization-summary"><div id="csv-${num}">`;
+  vis.forEach(r=>h+=`<div class="cs-row"><span class="cs-label">${r[0]}:</span><span class="cs-value">${r[1]}</span></div>`);
+  h+='</div>';
+  if(hid.length>0){
+    h+=`<div id="csh-${num}" class="view-hidden">`;
+    hid.forEach(r=>h+=`<div class="cs-row"><span class="cs-label">${r[0]}:</span><span class="cs-value">${r[1]}</span></div>`);
+    h+=`</div><span class="cs-toggle" onclick="toggleSum(${num})">View all ${rows.length} fields ▾</span>`;
+  }
+  h+='</div>';
+  return h;
+}
+window.toggleSum=function(n){
+  const h=document.getElementById('csh-'+n),t=h.parentElement.querySelector('.cs-toggle');
+  if(h.classList.contains('view-hidden')){h.classList.remove('view-hidden');t.textContent='Show less ▴';}
+  else{h.classList.add('view-hidden');const total=h.querySelectorAll('.cs-row').length+document.getElementById('csv-'+n).querySelectorAll('.cs-row').length;t.textContent='View all '+total+' fields ▾';}
+};
+function cap(s){return s.replace(/\b\w/g,c=>c.toUpperCase());}
+
+/* ─── INLINE PRODUCT SEARCH ─── */
+let searchTO;
+window.onProductSearch=function(val){
+  clearTimeout(searchTO);
+  const q=val.trim().toLowerCase(),box=$('#inline-search-results');
+  if(!q){box.classList.add('view-hidden');return;}
+  searchTO=setTimeout(()=>{
+    const res=[];
+    PRODUCTS.forEach(p=>{if(p.title.toLowerCase().includes(q))p.variants.forEach(v=>res.push({product:p,variant:v}));});
+    if(!res.length){box.innerHTML='<div style="padding:12px;text-align:center;color:#919191;font-size:12px">No products found</div>';box.classList.remove('view-hidden');return;}
+    let h='';
+    res.forEach(r=>{
+      const inCart=state.lineItems.find(l=>l.variantId===r.variant.id);
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background .1s;${inCart?'opacity:.5':''}" onmouseover="this.style.background='#f7f7f7'" onmouseout="this.style.background=''" onclick="${inCart ? '' : "addFromSearch('" + r.product.id + "','" + r.variant.id + "')"}">
+        <div style="width:32px;height:32px;border-radius:4px;background:${r.product.imgBg};display:flex;align-items:center;justify-content:center;font-size:7px;color:${r.product.imgBg==='#e3e3e3'?'#616161':'#fff'};font-weight:600;flex-shrink:0">${r.product.imgText}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:#303030;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.product.title}</div><div style="font-size:11px;color:#616161">${r.variant.name} · ${fmt(r.variant.price)}</div></div>
+        ${inCart?'<span style="font-size:11px;color:#919191">In cart</span>':''}
+      </div>`;
+    });
+    box.innerHTML=h;box.classList.remove('view-hidden');
+  },200);
+};
+window.addFromSearch=function(pid,vid){
+  const p=PRODUCTS.find(x=>x.id===pid),v=p.variants.find(x=>x.id===vid);
+  addLineItem(p,v);
+  $('#product-search').value='';$('#inline-search-results').classList.add('view-hidden');
+  showToast(p.title+' added');
+};
+
+/* ─── BROWSE MODAL ─── */
+window.openBrowseModal=function(){
+  state.browseChecked.clear();
+  renderBrowseProducts('');
+  $('#browse-modal').classList.remove('hidden');
+  $('#browse-search').value='';$('#browse-search').focus();
+};
+window.closeBrowseModal=function(){$('#browse-modal').classList.add('hidden');};
+window.filterBrowseProducts=function(q){renderBrowseProducts(q.trim().toLowerCase());};
+
+function renderBrowseProducts(q){
+  const list=$('#browse-products-list');
+  let html='',filtered=PRODUCTS.filter(p=>!q||p.title.toLowerCase().includes(q));
+  filtered.forEach(p=>{
+    const ic=p.imgBg==='#e3e3e3'?'#616161':'#fff';
+    html+=`<div class="browse-product-row">
+      <div class="browse-product-check"><input type="checkbox" id="bp-${p.id}" onchange="toggleBrowseProduct('${p.id}',this.checked)"></div>
+      <div class="browse-product-img"><div style="width:100%;height:100%;background:${p.imgBg};display:flex;align-items:center;justify-content:center;font-size:8px;color:${ic};font-weight:600">${p.imgText}</div></div>
+      <div class="browse-product-name">${p.title}</div>
+    </div>`;
+    p.variants.forEach(v=>{
+      const already=state.lineItems.find(l=>l.variantId===v.id);
+      html+=`<div class="browse-variant-row" style="${already?'opacity:.5':''}">
+        <div class="browse-product-check"><input type="checkbox" id="bv-${v.id}" ${already?'disabled checked':''} onchange="toggleBrowseVariant('${v.id}',this.checked)"></div>
+        <div class="browse-variant-name">${v.name}</div>
+        <div class="browse-variant-available"></div>
+        <div class="browse-variant-price">${fmt(v.price)} USD</div>
+      </div>`;
+    });
+  });
+  list.innerHTML=html;
+  updateBrowseCount();
+}
+
+window.toggleBrowseProduct=function(pid,checked){
+  const p=PRODUCTS.find(x=>x.id===pid);
+  p.variants.forEach(v=>{
+    if(state.lineItems.find(l=>l.variantId===v.id)) return;
+    const cb=document.getElementById('bv-'+v.id);
+    if(cb){cb.checked=checked;}
+    if(checked) state.browseChecked.add(v.id); else state.browseChecked.delete(v.id);
+  });
+  updateBrowseCount();
+};
+window.toggleBrowseVariant=function(vid,checked){
+  if(checked) state.browseChecked.add(vid); else state.browseChecked.delete(vid);
+  updateBrowseCount();
+};
+function updateBrowseCount(){
+  const n=state.browseChecked.size+state.lineItems.length;
+  $('#browse-selected-count').textContent=state.browseChecked.size+'/500 variants selected';
+}
+
+window.addSelectedProducts=function(){
+  if(state.browseChecked.size===0){closeBrowseModal();return;}
+  state.browseChecked.forEach(vid=>{
+    for(const p of PRODUCTS){
+      const v=p.variants.find(x=>x.id===vid);
+      if(v){addLineItem(p,v);break;}
+    }
+  });
+  state.browseChecked.clear();
+  closeBrowseModal();
+  showToast('Products added to order');
+};
+
+/* ─── CUSTOMER SEARCH ─── */
+window.onCustomerSearch=function(val){
+  const raw=val.trim(),q=raw.toLowerCase(),box=$('#customer-results');
+  if(!q){box.innerHTML='';return;}
+  const res=CUSTOMERS.filter(c=>c.name.toLowerCase().includes(q)||c.contact.toLowerCase().includes(q)||c.email.toLowerCase().includes(q));
+  let h='';
+  if(res.length){
+    res.forEach(c=>{
+      const ini=((c.contact||c.name||'N').split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2)||'N').toUpperCase();
+      h+=`<div class="customer-result-item" onclick="selectCustomer('${c.id}')"><div class="customer-avatar-sm">${ini}</div><div><div class="customer-result-name">${esc(c.name)}</div><div class="customer-result-email">${esc(c.contact)} · ${esc(c.email)}</div></div></div>`;
+    });
+  }else{
+    h+='<div style="padding:8px 10px 6px;font-size:12px;color:#919191">No customers found</div>';
+  }
+  h+=`<div class="customer-create-item" data-query="${esc(raw)}" onclick="createCustomerFromSearch(this.dataset.query)"><span class="customer-create-icon">+</span><span class="customer-create-text">Create a new customer</span></div>`;
+  box.innerHTML=h;
+};
+window.createCustomerFromSearch=function(query){
+  const input=(query||'').trim()||($('#customer-search').value||'').trim();
+  if(!input) return;
+  const isEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
+  const base=isEmail?input.split('@')[0].replace(/[._-]+/g,' '):input;
+  const label=cap(base.replace(/\s+/g,' ').trim()||'New customer');
+  const id='c-new-'+Date.now();
+  CUSTOMERS.unshift({
+    id,
+    name:label,
+    contact:label,
+    email:isEmail?input:'No email provided',
+    phone:'No phone provided',
+    address:'No address provided'
+  });
+  selectCustomer(id);
+  showToast('New customer created');
+};
+window.selectCustomer=function(id){
+  const c=CUSTOMERS.find(x=>x.id===id);if(!c)return;
+  $('#customer-search-area').classList.add('view-hidden');
+  const sel=$('#customer-selected');sel.classList.remove('view-hidden');
+  sel.innerHTML=`<div class="customer-selected-card"><div class="cs-name">${esc(c.name)}</div><div class="cs-detail">${esc(c.contact)}</div><div class="cs-detail">${esc(c.email)}</div><div class="cs-detail">${esc(c.phone)}</div><div class="cs-detail">${esc(c.address)}</div><a class="cs-change" onclick="changeCustomer()">Change customer</a></div>`;
+  showToast('Customer: '+c.name);
+};
+window.changeCustomer=function(){
+  $('#customer-search-area').classList.remove('view-hidden');$('#customer-selected').classList.add('view-hidden');$('#customer-search').value='';$('#customer-results').innerHTML='';
+};
+
+/* ─── COLLECT PAYMENT DROPDOWN ─── */
+window.toggleCollectDropdown=function(){
+  const dd=$('#collect-dropdown');
+  if(dd.classList.contains('hidden')){
+    dd.classList.remove('hidden');
+    dd.classList.remove('upward');
+    const wrap=dd.closest('.collect-payment-wrap');
+    const btn=wrap?wrap.querySelector('.btn-collect-payment'):null;
+    if(btn){
+      const ddRect=dd.getBoundingClientRect();
+      const btnRect=btn.getBoundingClientRect();
+      const spaceBelow=window.innerHeight-btnRect.bottom;
+      const spaceAbove=btnRect.top;
+      if(spaceBelow<ddRect.height+12&&spaceAbove>spaceBelow) dd.classList.add('upward');
+    }
+    setTimeout(()=>document.addEventListener('click',closeCollectDropdownOutside,{once:true}),10);
+  } else dd.classList.add('hidden');
+};
+window.closeCollectDropdown=function(){
+  const dd=$('#collect-dropdown');
+  dd.classList.add('hidden');
+  dd.classList.remove('upward');
+};
+function closeCollectDropdownOutside(e){
+  if(!e.target.closest('.collect-payment-wrap'))closeCollectDropdown();
+}
+
+/* ─── CUSTOMIZE MODALS ─── */
+window.openCustomizeModal=function(num){
+  if(num===1) renderCustomize1(); else renderCustomize2();
+  $('#customize-modal-'+num).classList.remove('hidden');
+};
+window.closeCustomizeModal=function(num){$('#customize-modal-'+num).classList.add('hidden');};
+
+window.pickOption=function(gid,el,val){
+  document.getElementById(gid).querySelectorAll('.image-picker-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');el.dataset.value=val;
+};
+window.pickRadio=function(gid,el,val){
+  document.getElementById(gid).querySelectorAll('.radio-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');el.querySelector('input[type="radio"]').checked=true;el.dataset.value=val;
+};
+
+function gv(id){const e=document.getElementById(id);return e?e.value:'';}
+function gs(gid){const s=document.querySelector('#'+gid+' .selected');return s?(s.dataset.value||''):'';}
+
+window.saveCustomization=function(num){
+  if(num===1){
+    state.customizations[1]={_saved:true,
+      depositSlip:gs('c1-deposit'),stamp:gs('c1-stamp'),border:gs('c1-border'),checkStyle:gs('c1-checkstyle'),
+      startingNumber:gv('c1-starting-num'),typeface:gv('c1-typeface'),typefaceId:gv('c1-typeface-id'),
+      logoOption:gv('c1-logo-option'),designLogo:gv('c1-design-logo'),
+      imprintBusiness:gv('c1-imprint-business'),imprintSlogan:gv('c1-imprint-slogan'),imprintAddress:gv('c1-imprint-address'),imprintCsz:gv('c1-imprint-csz'),imprintPhone:gv('c1-imprint-phone'),
+      bank1:gv('c1-bank1'),bank2:gv('c1-bank2'),bank3:gv('c1-bank3'),bank4:gv('c1-bank4'),
+      routing:gv('c1-routing'),account:gv('c1-account'),
+      signatureLines:gs('c1-sig-lines'),depositParts:gs('c1-parts'),sigText:gv('c1-sig-text'),proof:gs('c1-proof'),comments:gv('c1-comments')
+    };
+  } else {
+    state.customizations[2]={_saved:true,
+      startingNumber:gv('c2-starting-num'),typeface:gv('c2-typeface'),typefaceId:gv('c2-typeface-id'),
+      logoOption:gv('c2-logo-option'),designLogo:gv('c2-design-logo'),
+      imprintBusiness:gv('c2-imprint-business'),imprintSlogan:gv('c2-imprint-slogan'),imprintAddress:gv('c2-imprint-address'),imprintCsz:gv('c2-imprint-csz'),imprintPhone:gv('c2-imprint-phone'),
+      extraPlacement:gv('c2-extra-placement'),extraAccept:document.getElementById('c2-extra-accept')?.checked||false,extraText:gv('c2-extra-text'),
+      proof:gs('c2-proof'),express:gs('c2-express'),comments:gv('c2-comments')
+    };
+  }
+  closeCustomizeModal(num);
+  renderLineItems();updateTotals();
+  showToast('Customization saved for '+(num===1?'53151N Intro Pack':'GEN6582 Repair Order'));
+};
+
+/* ─── RENDER CUSTOMIZE MODAL 1 ─── */
+function renderCustomize1(){
+  const s=state.customizations[1]||{};
+  $('#customize-body-1').innerHTML=`
+    <div class="modal-section"><div class="modal-section-title">Select a Deposit Slip <span class="required">*</span></div>
+      <div class="image-picker" id="c1-deposit">
+        <div class="image-picker-item ${s.depositSlip==='none'?'selected':''}" data-value="none" onclick="pickOption('c1-deposit',this,'none')"><div style="width:60px;height:50px;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#919191">None</div><span class="ip-label">None</span></div>
+        <div class="image-picker-item ${s.depositSlip==='100d'?'selected':''}" data-value="100d" onclick="pickOption('c1-deposit',this,'100d')"><div style="width:60px;height:50px;background:#f5f0e0;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#616161;text-align:center">100/D<br>Booked</div><span class="ip-label">100/D</span></div>
+        <div class="image-picker-item ${s.depositSlip==='100dd'?'selected':''}" data-value="100dd" onclick="pickOption('c1-deposit',this,'100dd')"><div style="width:60px;height:50px;background:#e8e8e8;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#616161;text-align:center">100D/D<br>Loose</div><span class="ip-label">100D/D</span></div>
+        <div class="image-picker-item ${s.depositSlip==='1000d'?'selected':''}" data-value="1000d" onclick="pickOption('c1-deposit',this,'1000d')"><div style="width:60px;height:50px;background:#faf5e8;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#616161;text-align:center">1000/D<br>Env.</div><span class="ip-label">1000/D</span></div>
+      </div></div>
+    <div class="modal-section"><div class="modal-section-title">Select a Stamp <span class="required">*</span></div>
+      <div class="image-picker" id="c1-stamp">
+        <div class="image-picker-item ${s.stamp==='none'?'selected':''}" data-value="none" onclick="pickOption('c1-stamp',this,'none')"><div style="width:60px;height:50px;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#919191">None</div><span class="ip-label">None</span></div>
+        <div class="image-picker-item ${s.stamp==='red'?'selected':''}" data-value="red" onclick="pickOption('c1-stamp',this,'red')"><div style="width:60px;height:50px;background:#fde8e8;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:32px;height:20px;background:#d72c0d;border-radius:2px"></div></div><span class="ip-label">Red</span></div>
+        <div class="image-picker-item ${s.stamp==='black'?'selected':''}" data-value="black" onclick="pickOption('c1-stamp',this,'black')"><div style="width:60px;height:50px;background:#f1f1f1;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:32px;height:20px;background:#303030;border-radius:2px"></div></div><span class="ip-label">Black</span></div>
+        <div class="image-picker-item ${s.stamp==='blue'?'selected':''}" data-value="blue" onclick="pickOption('c1-stamp',this,'blue')"><div style="width:60px;height:50px;background:#e4edff;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:32px;height:20px;background:#005bd3;border-radius:2px"></div></div><span class="ip-label">Blue</span></div>
+      </div></div>
+    <div class="modal-section"><div class="modal-section-title">Select a Border (for Medium stamp/DODL)</div>
+      <div class="image-picker" id="c1-border">
+        <div class="image-picker-item ${s.border==='none'?'selected':''}" data-value="none" onclick="pickOption('c1-border',this,'none')"><div style="width:60px;height:50px;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#919191">None</div><span class="ip-label">None</span></div>
+        <div class="image-picker-item ${s.border==='three-line'?'selected':''}" data-value="three-line" onclick="pickOption('c1-border',this,'three-line')"><div style="width:60px;height:50px;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:30px;border-top:2px solid #303030;border-bottom:2px solid #303030;height:16px;position:relative"><div style="position:absolute;top:50%;left:0;right:0;border-top:1px solid #303030"></div></div></div><span class="ip-label">Three Line</span></div>
+        <div class="image-picker-item ${s.border==='two-line'?'selected':''}" data-value="two-line" onclick="pickOption('c1-border',this,'two-line')"><div style="width:60px;height:50px;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:30px;border-top:2px solid #303030;border-bottom:2px solid #303030;height:16px"></div></div><span class="ip-label">Two Line</span></div>
+        <div class="image-picker-item ${s.border==='single'?'selected':''}" data-value="single" onclick="pickOption('c1-border',this,'single')"><div style="width:60px;height:50px;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:30px;height:40px;border:1px solid #303030"></div></div><span class="ip-label">Single</span></div>
+        <div class="image-picker-item ${s.border==='pinstripe'?'selected':''}" data-value="pinstripe" onclick="pickOption('c1-border',this,'pinstripe')"><div style="width:60px;height:50px;border:1px solid #ddd;border-radius:3px;display:flex;align-items:center;justify-content:center"><div style="width:30px;height:40px;border:3px double #303030"></div></div><span class="ip-label">Pinstripe</span></div>
+      </div></div>
+    <div class="modal-section"><div class="modal-section-title">Select a Check Style <span class="required">*</span></div>
+      <div class="image-picker" id="c1-checkstyle">
+        <div class="image-picker-item ip-color-swatch ${s.checkStyle==='parchment'?'selected':''}" data-value="parchment" onclick="pickOption('c1-checkstyle',this,'parchment')"><div class="ip-color-inner" style="background:linear-gradient(135deg,#f5f0e4,#e8ddc8)"></div><span class="ip-label">Parchment</span></div>
+        <div class="image-picker-item ip-color-swatch ${s.checkStyle==='blue'?'selected':''}" data-value="blue" onclick="pickOption('c1-checkstyle',this,'blue')"><div class="ip-color-inner" style="background:linear-gradient(135deg,#d4e4f7,#bdd4ee)"></div><span class="ip-label">Blue Safety</span></div>
+        <div class="image-picker-item ip-color-swatch ${s.checkStyle==='green'?'selected':''}" data-value="green" onclick="pickOption('c1-checkstyle',this,'green')"><div class="ip-color-inner" style="background:linear-gradient(135deg,#d4edda,#b8ddc2)"></div><span class="ip-label">Green Safety</span></div>
+        <div class="image-picker-item ip-color-swatch ${s.checkStyle==='yellow'?'selected':''}" data-value="yellow" onclick="pickOption('c1-checkstyle',this,'yellow')"><div class="ip-color-inner" style="background:linear-gradient(135deg,#fff3cd,#f0e4a8)"></div><span class="ip-label">Yellow Safety</span></div>
+      </div></div>
+    <div class="modal-section"><div class="modal-section-title">Enter Your Product Starting Number</div><div class="form-hint">Type in NONE if you do not wish to have numbering</div><input class="form-input mt-4" id="c1-starting-num" placeholder="e.g. 1001" value="${s.startingNumber||''}"></div>
+    <div class="modal-section"><div class="modal-section-title">Choose a Typeface <span class="required">*</span></div>
+      <select class="form-select" id="c1-typeface"><option value="">Select...</option><option ${s.typeface==='standard'?'selected':''} value="standard">Standard</option><option ${s.typeface==='old-english'?'selected':''} value="old-english">Old English</option><option ${s.typeface==='script'?'selected':''} value="script">Script</option><option ${s.typeface==='block'?'selected':''} value="block">Block</option><option ${s.typeface==='times'?'selected':''} value="times">Times Roman</option><option ${s.typeface==='helvetica'?'selected':''} value="helvetica">Helvetica</option></select>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px"><div class="form-group" style="flex:1;margin-bottom:0"><label class="form-label" style="font-size:12px">Enter Typeface ID</label><input class="form-input" id="c1-typeface-id" placeholder="e.g. B" value="${s.typefaceId||''}"></div><a style="font-size:12px;margin-left:12px;margin-top:18px" onclick="showToast('Typeface catalog','info')">Click Here For Typefaces</a></div></div>
+    <div class="modal-section"><div class="modal-section-title">Select a Logo Option <span class="required">*</span></div>
+      <select class="form-select" id="c1-logo-option"><option value="">Select...</option><option ${s.logoOption==='none'?'selected':''} value="none">None</option><option ${s.logoOption==='standard'?'selected':''} value="standard">FREE Standard Logo</option><option ${s.logoOption==='custom'?'selected':''} value="custom">Custom Logo</option><option ${s.logoOption==='design'?'selected':''} value="design">Business Design Logo</option></select>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px"><div class="form-group" style="flex:1;margin-bottom:0"><label class="form-label" style="font-size:12px">FREE Business Design Logos</label><input class="form-input" id="c1-design-logo" placeholder="Logo ID" value="${s.designLogo||''}"></div><a style="font-size:12px;margin-left:12px;margin-top:18px" onclick="showToast('Stock logos','info')">Click Here For Stock Logos</a></div></div>
+    <div class="modal-section"><div class="modal-section-title">Enter Imprint</div><div class="modal-section-hint">Suggestions provided below</div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">Business Name or Main Line of Text</label><input class="form-input" id="c1-imprint-business" placeholder="Your Company Name" value="${s.imprintBusiness||''}"></div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">Advertising Slogan</label><input class="form-input" id="c1-imprint-slogan" placeholder="eg. 20 Years of Service" value="${s.imprintSlogan||''}"></div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">P.O. Box or Street Address</label><input class="form-input" id="c1-imprint-address" placeholder="123 Main Street" value="${s.imprintAddress||''}"></div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">City, State, Zip</label><input class="form-input" id="c1-imprint-csz" placeholder="Your Town, State and Zip" value="${s.imprintCsz||''}"></div>
+      <div class="form-group" style="margin-bottom:0"><label class="form-label" style="font-size:12px">Phone, Fax or Email</label><input class="form-input" id="c1-imprint-phone" placeholder="(123) 456-7890" value="${s.imprintPhone||''}"></div></div>
+    <div class="modal-section"><div class="modal-section-title">Enter Bank Information</div><div class="modal-section-hint">Enter your financial institution name and address as it appears on your check.</div>
+      <div class="form-group"><input class="form-input" id="c1-bank1" placeholder="Bank Name or Address..." value="${s.bank1||''}"></div>
+      <div class="form-group"><input class="form-input" id="c1-bank2" placeholder="Bank Name or Address..." value="${s.bank2||''}"></div>
+      <div class="form-group"><input class="form-input" id="c1-bank3" placeholder="Bank Name or Address..." value="${s.bank3||''}"></div>
+      <div class="form-group" style="margin-bottom:0"><input class="form-input" id="c1-bank4" placeholder="Bank Name or Address..." value="${s.bank4||''}"></div></div>
+    <div class="modal-section"><div class="modal-section-title">Enter Bank Account Information</div><div class="form-row"><div class="form-group"><label class="form-label" style="font-size:12px">Routing Number</label><input class="form-input" id="c1-routing" placeholder="Routing Number" value="${s.routing||''}"></div><div class="form-group"><label class="form-label" style="font-size:12px">Account Number</label><input class="form-input" id="c1-account" placeholder="Account Number" value="${s.account||''}"></div></div></div>
+    <div class="modal-section"><div class="modal-section-title">Signature Lines <span class="required">*</span></div>
+      <div class="radio-group" id="c1-sig-lines">
+        <label class="radio-item ${s.signatureLines==='1'?'selected':''}" data-value="1" onclick="pickRadio('c1-sig-lines',this,'1')"><input type="radio" name="c1s" ${s.signatureLines==='1'?'checked':''}><span class="radio-item-label">1 Signature Line</span></label>
+        <label class="radio-item ${s.signatureLines==='2'?'selected':''}" data-value="2" onclick="pickRadio('c1-sig-lines',this,'2')"><input type="radio" name="c1s" ${s.signatureLines==='2'?'checked':''}><span class="radio-item-label">2 Signature Lines</span></label>
+      </div></div>
+    <div class="modal-section"><div class="modal-section-title">Deposit Ticket Parts <span class="required">*</span></div>
+      <div class="radio-group" id="c1-parts">
+        <label class="radio-item ${s.depositParts==='2'?'selected':''}" data-value="2" onclick="pickRadio('c1-parts',this,'2')"><input type="radio" name="c1p" ${s.depositParts==='2'?'checked':''}><span class="radio-item-label">2 Part Duplicates</span></label>
+        <label class="radio-item ${s.depositParts==='3'?'selected':''}" data-value="3" onclick="pickRadio('c1-parts',this,'3')"><input type="radio" name="c1p" ${s.depositParts==='3'?'checked':''}><span class="radio-item-label">3 Part Duplicates</span></label>
+      </div></div>
+    <div class="modal-section"><div class="modal-section-title">Text Above Signature Line</div><div class="form-hint">Void After 90 Days, Two Signatures Required, etc.</div><input class="form-input mt-4" id="c1-sig-text" placeholder="e.g. Void After 90 Days" value="${s.sigText||''}"></div>
+    <div class="modal-section"><div class="modal-section-title">Proof Preference <span class="required">*</span></div><div class="modal-section-hint">Proofs typically take 24-48 business hours.</div>
+      <div class="radio-group" id="c1-proof">
+        <label class="radio-item ${s.proof==='no'?'selected':''}" data-value="no" onclick="pickRadio('c1-proof',this,'no')"><input type="radio" name="c1pr" ${s.proof==='no'?'checked':''}><span class="radio-item-label">No, I do not need a proof</span></label>
+        <label class="radio-item ${s.proof==='yes'?'selected':''}" data-value="yes" onclick="pickRadio('c1-proof',this,'yes')"><input type="radio" name="c1pr" ${s.proof==='yes'?'checked':''}><span class="radio-item-label">Yes, I need a proof</span></label>
+      </div></div>
+    <div class="modal-section" style="border-bottom:none;margin-bottom:0"><div class="modal-section-title">Optional Comments</div><textarea class="form-textarea mt-4" id="c1-comments" rows="4" placeholder="Include any comments...">${s.comments||''}</textarea></div>`;
+}
+
+/* ─── RENDER CUSTOMIZE MODAL 2 ─── */
+function renderCustomize2(){
+  const s=state.customizations[2]||{};
+  $('#customize-body-2').innerHTML=`
+    <div class="modal-section"><div class="modal-section-title">Starting Number</div><div class="form-hint">Type in NONE if you do not wish to have numbering</div><input class="form-input mt-4" id="c2-starting-num" placeholder="e.g. 0001101" value="${s.startingNumber||''}"></div>
+    <div class="modal-section"><div class="modal-section-title">Choose a Typeface <span class="required">*</span></div>
+      <select class="form-select" id="c2-typeface"><option value="">Select...</option><option ${s.typeface==='standard'?'selected':''} value="standard">Standard</option><option ${s.typeface==='old-english'?'selected':''} value="old-english">Old English</option><option ${s.typeface==='script'?'selected':''} value="script">Script</option><option ${s.typeface==='block'?'selected':''} value="block">Block</option><option ${s.typeface==='times'?'selected':''} value="times">Times Roman</option><option ${s.typeface==='helvetica'?'selected':''} value="helvetica">Helvetica</option></select>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px"><div class="form-group" style="flex:1;margin-bottom:0"><label class="form-label" style="font-size:12px">Enter Typeface ID</label><input class="form-input" id="c2-typeface-id" placeholder="e.g. B" value="${s.typefaceId||''}"></div><a style="font-size:12px;margin-left:12px;margin-top:18px" onclick="showToast('Typeface catalog','info')">Click Here For Typefaces</a></div></div>
+    <div class="modal-section"><div class="modal-section-title">Select a Logo Option <span class="required">*</span></div>
+      <select class="form-select" id="c2-logo-option"><option value="">Select...</option><option ${s.logoOption==='none'?'selected':''} value="none">None</option><option ${s.logoOption==='standard'?'selected':''} value="standard">FREE Standard Logo</option><option ${s.logoOption==='custom'?'selected':''} value="custom">Custom Logo</option><option ${s.logoOption==='design'?'selected':''} value="design">Business Design Logo</option></select>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px"><div class="form-group" style="flex:1;margin-bottom:0"><label class="form-label" style="font-size:12px">FREE Business Design Logos</label><input class="form-input" id="c2-design-logo" placeholder="Logo ID" value="${s.designLogo||''}"></div><a style="font-size:12px;margin-left:12px;margin-top:18px" onclick="showToast('Stock logos','info')">Click Here For Stock Logos</a></div></div>
+    <div class="modal-section"><div class="modal-section-title">Enter Imprint</div><div class="modal-section-hint">Suggestions provided below</div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">Business Name or Main Line of Text</label><input class="form-input" id="c2-imprint-business" placeholder="Your Company Name" value="${s.imprintBusiness||''}"></div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">Advertising Slogan</label><input class="form-input" id="c2-imprint-slogan" placeholder="eg. 20 Years of Service" value="${s.imprintSlogan||''}"></div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">P.O. Box or Street Address</label><input class="form-input" id="c2-imprint-address" placeholder="123 Main Street" value="${s.imprintAddress||''}"></div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">City, State, Zip</label><input class="form-input" id="c2-imprint-csz" placeholder="Your Town, State and Zip" value="${s.imprintCsz||''}"></div>
+      <div class="form-group" style="margin-bottom:0"><label class="form-label" style="font-size:12px">Phone, Fax or Email</label><input class="form-input" id="c2-imprint-phone" placeholder="(123) 456-7890" value="${s.imprintPhone||''}"></div></div>
+    <div class="modal-section"><div class="modal-section-title">Extra Fee Printed Lines (Optional)</div>
+      <div class="form-group"><label class="form-label" style="font-size:12px">Placement instructions</label><textarea class="form-textarea" id="c2-extra-placement" rows="2" placeholder="Tell us where you want extra text...">${s.extraPlacement||''}</textarea></div>
+      <div class="checkbox-row"><input type="checkbox" id="c2-extra-accept" ${s.extraAccept?'checked':''}><label for="c2-extra-accept">YES check/uncheck to accept</label></div>
+      <div class="form-group" style="margin-bottom:0"><label class="form-label" style="font-size:12px">Text to print (+ $16.00)</label><textarea class="form-textarea" id="c2-extra-text" rows="2" placeholder="Text to print...">${s.extraText||''}</textarea></div></div>
+    <div class="modal-section"><div class="modal-section-title">Proof Preference <span class="required">*</span></div><div class="modal-section-hint">Proofs typically take 24-48 business hours.</div>
+      <div class="radio-group" id="c2-proof">
+        <label class="radio-item ${s.proof==='no'?'selected':''}" data-value="no" onclick="pickRadio('c2-proof',this,'no')"><input type="radio" name="c2pr" ${s.proof==='no'?'checked':''}><span class="radio-item-label">No, I do not need a proof</span></label>
+        <label class="radio-item ${s.proof==='yes'?'selected':''}" data-value="yes" onclick="pickRadio('c2-proof',this,'yes')"><input type="radio" name="c2pr" ${s.proof==='yes'?'checked':''}><span class="radio-item-label">Yes, I need a proof</span></label>
+      </div></div>
+    <div class="modal-section"><div class="modal-section-title">Need Express Service?</div><div class="modal-section-hint">If before 5PM EST & no proof needed:</div>
+      <div class="radio-group" id="c2-express">
+        <label class="radio-item ${s.express==='none'?'selected':''}" data-value="none" onclick="pickRadio('c2-express',this,'none')"><input type="radio" name="c2e" ${s.express==='none'?'checked':''}><span class="radio-item-label">No express services needed</span></label>
+        <label class="radio-item ${s.express==='same-day'?'selected':''}" data-value="same-day" onclick="pickRadio('c2-express',this,'same-day')"><input type="radio" name="c2e" ${s.express==='same-day'?'checked':''}><div><span class="radio-item-label">Same Day Rush</span><div class="radio-item-desc">Ships within 24hrs UPS Ground (+ $30.00)</div></div></label>
+        <label class="radio-item ${s.express==='expedited'?'selected':''}" data-value="expedited" onclick="pickRadio('c2-express',this,'expedited')"><input type="radio" name="c2e" ${s.express==='expedited'?'checked':''}><div><span class="radio-item-label">Expedited Production</span><div class="radio-item-desc">Shipped within 48hrs UPS Ground (+ $100.00)</div></div></label>
+        <label class="radio-item ${s.express==='expedited-air'?'selected':''}" data-value="expedited-air" onclick="pickRadio('c2-express',this,'expedited-air')"><input type="radio" name="c2e" ${s.express==='expedited-air'?'checked':''}><div><span class="radio-item-label">Expedited + Next Day Air</span><div class="radio-item-desc">Min Qty (+ $150.00)</div></div></label>
+      </div></div>
+    <div class="modal-section" style="border-bottom:none;margin-bottom:0"><div class="modal-section-title">Optional Comments</div><textarea class="form-textarea mt-4" id="c2-comments" rows="4" placeholder="Include any comments...">${s.comments||''}</textarea></div>`;
+}
+
+/* ─── INIT ─── */
+updateTotals();
+})();
+</script>
+</body>
+</html>
